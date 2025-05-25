@@ -18,7 +18,7 @@ page = st.sidebar.radio("Aller à", [
 ])
 
 # Chargement des données (adaptés aux fichiers fournis)
-resistance_df = pd.read_csv("tests_par_semaine_antibiotiques_2024.csv")
+resistance_df = pd.read_csv("resistance_data.csv")
 pheno_df = pd.read_excel("staph_aureus_pheno_final.xlsx")
 advanced_df = pd.read_excel("staph_aureus_percentages_avec_alertes.xlsx")
 weekly_df = pd.read_excel("staph aureus hebdomadaire excel.xlsx")
