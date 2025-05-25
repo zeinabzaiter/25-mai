@@ -35,7 +35,7 @@ if page == "Vue d'ensemble":
     col1, col2, col3 = st.columns(3)
     col1.metric("% MRSA", "23%", "+2%")
     col2.metric("% MSSA", "77%", "-2%")
-    col3.metric("Année critique", "2022")
+    col3.metric("Année critique", "2024")
 
     st.subheader("Évolution temporelle")
     if 'Année' in resistance_df.columns:
