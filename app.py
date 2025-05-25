@@ -33,9 +33,18 @@ def detect_outliers_tukey(series):
 if page == "Vue d'ensemble":
     st.title("Vue d'ensemble")
     col1, col2, col3 = st.columns(3)
-    col1.metric("% MRSA", "23%", "+2%")
-    col2.metric("% MSSA", "77%", "-2%")
-    col3.metric("Année critique", "2024")
+    # Calculer les moyennes globales sur toutes les semaines
+pheno_pct = pd.read_csv("phenotypes_percentages_weekly.csv")
+moyennes = pheno_pct[["MRSA", "VRSA", "Other", "Wild"]].mean().round(1)
+
+col1.metric("% MRSA", f"{moyennes['MRSA']}%")
+col2.metric("% VRSA", f"{moyennes['VRSA']}%")
+col3.metric("% Other", f"{moyennes['Other']}%")
+
+# Ligne suivante (en dessous) pour Wild
+col4, _ = st.columns([1, 2])
+col4.metric("% Wild", f"{moyennes['Wild']}%")
+
 
     st.subheader("Évolution temporelle")
     if 'Année' in resistance_df.columns:
