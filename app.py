@@ -18,8 +18,8 @@ page = st.sidebar.radio("Aller à", [
 
 # ✅ Chargement des données avec les bons noms de fichiers
 resistance_df = pd.read_csv("resistance_data.csv")
-pheno_df = pd.read_excel("staph_aureus_pheno_final.xlsx")
-advanced_df = pd.read_excel("staph_aureus_percentages_avec_alertes.xlsx")
+pheno_df = pd.read_csv("phenotypes.csv")
+advanced_df = pd.read_csv("advanced_data.csv")
 weekly_df = pd.read_excel("staph_aureus_hebdomadaire.xlsx")
 
 # 📊 Fonction de détection d'alarmes (méthode de Tukey)
