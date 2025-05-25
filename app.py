@@ -17,11 +17,11 @@ page = st.sidebar.radio("Aller à", [
     "6. Analyse hebdomadaire"
 ])
 
-# Chargement des données
-resistance_df = pd.read_csv("data/resistance_data.csv")
-pheno_df = pd.read_csv("data/phenotypes.csv")
-advanced_df = pd.read_csv("data/advanced_data.csv")
-weekly_df = pd.read_excel("data/staph_aureus_hebdomadaire.xlsx")
+# Chargement des données (adaptés aux fichiers fournis)
+resistance_df = pd.read_csv("tests_par_semaine_antibiotiques_2024.csv")
+pheno_df = pd.read_excel("staph_aureus_pheno_final.xlsx")
+advanced_df = pd.read_excel("staph_aureus_percentages_avec_alertes.xlsx")
+weekly_df = pd.read_excel("staph aureus hebdomadaire excel.xlsx")
 
 # Détection des alarmes
 
@@ -43,39 +43,51 @@ if page == "1. Vue d'ensemble":
     with col3:
         st.metric("Année critique", "2022")
     st.subheader("Évolution temporelle")
-    trend_data = resistance_df.groupby(["Année", "Phénotype"])["Taux de résistance (%)"].mean().reset_index()
-    fig = px.line(trend_data, x="Année", y="Taux de résistance (%)", color="Phénotype")
-    st.plotly_chart(fig)
+    if 'Année' in resistance_df.columns:
+        trend_data = resistance_df.groupby(["Année", "Phénotype"])["Taux de résistance (%)"].mean().reset_index()
+        fig = px.line(trend_data, x="Année", y="Taux de résistance (%)", color="Phénotype")
+        st.plotly_chart(fig)
+    else:
+        st.warning("Les colonnes attendues ne sont pas présentes dans le fichier de données.")
 
 # PAGE 2
 elif page == "2. Résistance aux antibiotiques":
     st.title("Résistance aux antibiotiques")
-    ab = st.selectbox("Antibiotique", resistance_df["Antibiotique"].unique())
-    df_ab = resistance_df[resistance_df["Antibiotique"] == ab]
-    df_ab["Alarme"] = detect_outliers_tukey(df_ab["Taux de résistance (%)"])
-    fig = px.bar(df_ab, x="Année", y="Taux de résistance (%)", color="Alarme", 
-                 color_discrete_map={True: "darkred", False: "steelblue"}, title=f"Taux de résistance - {ab}")
-    st.plotly_chart(fig)
+    if "Antibiotique" in resistance_df.columns:
+        ab = st.selectbox("Antibiotique", resistance_df["Antibiotique"].unique())
+        df_ab = resistance_df[resistance_df["Antibiotique"] == ab]
+        df_ab["Alarme"] = detect_outliers_tukey(df_ab["Taux de résistance (%)"])
+        fig = px.bar(df_ab, x="Année", y="Taux de résistance (%)", color="Alarme", 
+                     color_discrete_map={True: "darkred", False: "steelblue"}, title=f"Taux de résistance - {ab}")
+        st.plotly_chart(fig)
+    else:
+        st.warning("Colonne 'Antibiotique' manquante dans les données.")
 
 # PAGE 3
 elif page == "3. Phénotypes de résistance":
     st.title("Phénotypes")
-    fig = px.pie(pheno_df, names="Phénotype", values="Nombre", title="Proportions")
-    st.plotly_chart(fig)
-    st.subheader("Alarmes phénotypiques")
-    pheno_df["Alarme"] = detect_outliers_tukey(pheno_df["Nombre"])
-    st.dataframe(pheno_df[pheno_df["Alarme"]])
+    if "Phénotype" in pheno_df.columns:
+        fig = px.pie(pheno_df, names="Phénotype", values="Nombre", title="Proportions")
+        st.plotly_chart(fig)
+        st.subheader("Alarmes phénotypiques")
+        pheno_df["Alarme"] = detect_outliers_tukey(pheno_df["Nombre"])
+        st.dataframe(pheno_df[pheno_df["Alarme"]])
+    else:
+        st.warning("Colonnes 'Phénotype' ou 'Nombre' absentes.")
 
 # PAGE 4
 elif page == "4. Analyse avancée":
     st.title("Analyse avancée")
-    age = st.slider("Filtrer par âge", 0, 100, (0, 100))
-    sexe = st.selectbox("Sexe", ["Tous", "Homme", "Femme"])
-    filt = advanced_df[(advanced_df["Age"] >= age[0]) & (advanced_df["Age"] <= age[1])]
-    if sexe != "Tous":
-        filt = filt[filt["Sexe"] == sexe]
-    st.dataframe(filt)
-    st.download_button("Télécharger", filt.to_csv(index=False), "filtre.csv")
+    if "Age" in advanced_df.columns:
+        age = st.slider("Filtrer par âge", 0, 100, (0, 100))
+        sexe = st.selectbox("Sexe", ["Tous", "Homme", "Femme"])
+        filt = advanced_df[(advanced_df["Age"] >= age[0]) & (advanced_df["Age"] <= age[1])]
+        if sexe != "Tous":
+            filt = filt[filt["Sexe"] == sexe]
+        st.dataframe(filt)
+        st.download_button("Télécharger", filt.to_csv(index=False), "filtre.csv")
+    else:
+        st.warning("Colonnes 'Age' et 'Sexe' manquantes dans le fichier.")
 
 # PAGE 5
 elif page == "5. Documentation":
