@@ -46,6 +46,28 @@ if page == "Vue d'ensemble":
 
     st.subheader("Évolution temporelle")
     st.info("À personnaliser si des données temporelles sont disponibles.")
+elif page == "Résistance aux antibiotiques":
+    st.title("Résistance aux antibiotiques")
+    if "Antibiotique" in resistance_df.columns:
+        ab = st.selectbox("Choisir un antibiotique", resistance_df["Antibiotique"].unique())
+        df_ab = resistance_df[resistance_df["Antibiotique"] == ab]
+        df_ab["Alarme"] = detect_outliers_tukey(df_ab["Taux de résistance (%)"])
+        fig = px.bar(df_ab, x="Année", y="Taux de résistance (%)", color="Alarme",
+                     color_discrete_map={True: "darkred", False: "steelblue"},
+                     title=f"Résistance à {ab}")
+        st.plotly_chart(fig)
+    else:
+        st.warning("Colonne 'Antibiotique' absente du fichier.")
+elif page == "Phénotypes de résistance":
+    st.title("Phénotypes de résistance")
+    if "Phénotype" in pheno_df.columns:
+        fig = px.pie(pheno_df, names="Phénotype", values="Nombre", title="Répartition des phénotypes")
+        st.plotly_chart(fig)
+        st.subheader("Détection d'alertes")
+        pheno_df["Alarme"] = detect_outliers_tukey(pheno_df["Nombre"])
+        st.dataframe(pheno_df[pheno_df["Alarme"]])
+    else:
+        st.warning("Colonnes 'Phénotype' et 'Nombre' manquantes.")
 
 # Le reste des pages reste inchangé... (à compléter selon les besoins)
 
