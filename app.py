@@ -22,6 +22,9 @@ pheno_df = pd.read_csv("phenotypes.csv")
 advanced_df = pd.read_csv("advanced_data.csv")
 weekly_df = pd.read_excel("staph_aureus_hebdomadaire.xlsx")
 pheno_pct = pd.read_csv("phenotypes_percentages_weekly.csv")
+# Chargement des autres antibiotiques
+other_ab_df = pd.read_excel("other Antibiotiques staph aureus.xlsx")
+
 
 # Fonction pour détecter les valeurs aberrantes (règle de Tukey)
 def detect_outliers_tukey(series):
@@ -55,10 +58,16 @@ if page == "Vue d'ensemble":
 # PAGE 2 - Résistance aux antibiotiques
 elif page == "Résistance aux antibiotiques":
     st.title("Résistance aux antibiotiques")
-    ab_columns = [col for col in resistance_df.columns if col.startswith("%R") or col.startswith("% R")]
+    ab_columns = list(resistance_df.columns[resistance_df.columns.str.startswith(('%R', '% R'))]) + \
+             list(other_ab_df.columns[other_ab_df.columns.str.startswith(('%R', '% R'))])
+
     if ab_columns:
         selected_ab = st.selectbox("Choisir un antibiotique", ab_columns)
-        df_ab = resistance_df[["Semaine", selected_ab]].copy()
+        if selected_ab in resistance_df.columns:
+    df_ab = resistance_df[["Semaine", selected_ab]].copy()
+else:
+    df_ab = other_ab_df[["Semaine", selected_ab]].copy()
+
         df_ab["Alarme"] = detect_outliers_tukey(df_ab[selected_ab])
         fig = px.bar(df_ab, x="Semaine", y=selected_ab, color="Alarme",
                      color_discrete_map={True: "darkred", False: "steelblue"},
