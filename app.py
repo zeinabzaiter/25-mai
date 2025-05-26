@@ -34,30 +34,40 @@ def detect_outliers_tukey(series):
 if page == "Vue d'ensemble":
     st.title("Vue d'ensemble")
 
-    moyennes = pheno_pct[["MRSA", "VRSA", "Other", "Wild"]].mean().round(1)
+    if all(x in pheno_pct.columns for x in ["MRSA", "VRSA", "Other", "Wild"]):
+        moyennes = pheno_pct[["MRSA", "VRSA", "Other", "Wild"]].mean().round(1)
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("% MRSA", f"{moyennes['MRSA']}%")
-    col2.metric("% VRSA", f"{moyennes['VRSA']}%")
-    col3.metric("% Other", f"{moyennes['Other']}%")
+        col1, col2, col3 = st.columns(3)
+        col1.metric("% MRSA", f"{moyennes['MRSA']}%")
+        col2.metric("% VRSA", f"{moyennes['VRSA']}%")
+        col3.metric("% Other", f"{moyennes['Other']}%")
 
-    col4, _ = st.columns([1, 2])
-    col4.metric("% Wild", f"{moyennes['Wild']}%")
+        col4, _ = st.columns([1, 2])
+        col4.metric("% Wild", f"{moyennes['Wild']}%")
 
-    st.subheader("Évolution temporelle")
-    st.info("À personnaliser si des données temporelles sont disponibles.")
-elif page == "Résistance aux antibiotiques":
-    st.title("Résistance aux antibiotiques")
-    if "Antibiotique" in resistance_df.columns:
-        ab = st.selectbox("Choisir un antibiotique", resistance_df["Antibiotique"].unique())
-        df_ab = resistance_df[resistance_df["Antibiotique"] == ab]
-        df_ab["Alarme"] = detect_outliers_tukey(df_ab["Taux de résistance (%)"])
-        fig = px.bar(df_ab, x="Année", y="Taux de résistance (%)", color="Alarme",
-                     color_discrete_map={True: "darkred", False: "steelblue"},
-                     title=f"Résistance à {ab}")
+        st.subheader("Évolution temporelle")
+        fig = px.line(pheno_pct, x="week", y=["MRSA", "VRSA", "Other", "Wild"], markers=True)
+        fig.update_layout(title="Tendance hebdomadaire des phénotypes")
         st.plotly_chart(fig)
     else:
-        st.warning("Colonne 'Antibiotique' absente du fichier.")
+        st.info("À personnaliser si des données temporelles sont disponibles.")
+
+# PAGE 2 - Résistance aux antibiotiques
+elif page == "Résistance aux antibiotiques":
+    st.title("Résistance aux antibiotiques")
+    ab_columns = [col for col in resistance_df.columns if col.startswith("%R") or col.startswith("% R")]
+    if ab_columns:
+        selected_ab = st.selectbox("Choisir un antibiotique", ab_columns)
+        df_ab = resistance_df[["Semaine", selected_ab]].copy()
+        df_ab["Alarme"] = detect_outliers_tukey(df_ab[selected_ab])
+        fig = px.bar(df_ab, x="Semaine", y=selected_ab, color="Alarme",
+                     color_discrete_map={True: "darkred", False: "steelblue"},
+                     title=f"Résistance à {selected_ab}")
+        st.plotly_chart(fig)
+    else:
+        st.warning("Aucune colonne d'antibiotique trouvée.")
+
+# PAGE 3 - Phénotypes de résistance
 elif page == "Phénotypes de résistance":
     st.title("Phénotypes de résistance")
     if "Phénotype" in pheno_df.columns:
@@ -69,9 +79,7 @@ elif page == "Phénotypes de résistance":
     else:
         st.warning("Colonnes 'Phénotype' et 'Nombre' manquantes.")
 
-# Le reste des pages reste inchangé... (à compléter selon les besoins)
-
-# À compléter : autres pages comme dans la version précédente (antibiotiques, phénotypes, etc.)
+# PAGE 4 - Analyse avancée
 elif page == "Analyse avancée":
     st.title("Analyse avancée")
     if "Age" in advanced_df.columns and "Sexe" in advanced_df.columns:
@@ -84,6 +92,8 @@ elif page == "Analyse avancée":
         st.download_button("Télécharger les données filtrées", filt.to_csv(index=False), "filtre.csv")
     else:
         st.warning("Colonnes 'Age' ou 'Sexe' manquantes.")
+
+# PAGE 5 - Documentation
 elif page == "Documentation":
     st.title("Documentation")
     st.markdown("""
@@ -100,6 +110,8 @@ elif page == "Documentation":
     - Résistance : par antibiotique
     - Phénotypes : typologie MRSA, VRSA...
     """)
+
+# PAGE 6 - Analyse hebdomadaire
 elif page == "Analyse hebdomadaire":
     st.title("Analyse hebdomadaire avec alarmes")
     weekly_df["DATE_PRELEVEMENT"] = pd.to_datetime(weekly_df["DATE_PRELEVEMENT"], errors="coerce")
